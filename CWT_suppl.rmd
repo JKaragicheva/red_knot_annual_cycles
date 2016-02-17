@@ -1,6 +1,7 @@
 
 #Continuous wavelet transformation used to define onsets and offsets of life-cycle stages in red knots
-Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage-molt)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
+Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage-molt)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
+
 ##General remarks
 Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back the closest to the obtained onsets and offsets dates of measurements in the raw data. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
 
@@ -18,7 +19,6 @@ library(biwavelet)
 library(pracma)
 # download data from GitHub
 download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv", "Example_bird_for_wavelet_cor.csv")
-
 example_data<-read.csv("Example_bird_for_wavelet_cor.csv",stringsAsFactors=F)
 example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
 example_data<-example_data[order(example_data$DATE),]
@@ -38,7 +38,6 @@ Data_vec_centered = (Data_vec - m_data)/sqrt(variance)
 ```
 ###CWT
 Set parameters
-
 ```{r, eval = F}
 n = length(Data_vec_centered);
 dt = 1/365
@@ -47,28 +46,23 @@ pad = 1
 dj=7/365
 s0 = 2*dt
 mother="paul"
- 
 d<-cbind(Time, Data_vec_centered)
 ```
-Run CWT
 
+Run CWT
 ```{r, eval = F}
 tmp<-wt (d=d,pad = pad, dt = dt,  dj = dj, s0 = s0,  mother=mother, lag1=0.72, do.sig=F)
-
 #Assess CWT surface
-
 plot(tmp)
 ```
 
 Choose frequency band
-
 ```{r, eval = F}
 Cdelta=3.476
-
 Ind<-which(tmp$period>=3e01 & tmp$period<=1e03)
 ```
-Assess amplitude
 
+Assess amplitude
 ```{r, eval = F}
 red_power=tmp$power[Ind,]
 red_power=tmp$power.corr[Ind,]
@@ -110,27 +104,25 @@ dtmin=1
 ```
 
 Find onsets of body mass increase (times, at which amplitude reverses from negative to positive)
-
 ```{r, eval = F}
 timeOnset<-c()
-
 for ( i in 2:(length(insamp)-1)) {
    if((insamp[i-1]<=0)& (insamp[i]> 0)) {
-       timeOnset=c(timeOnset, Time[i]);      
-    }
+       timeOnset=c(timeOnset, Time[i])      
+   }
 }
 ```
 
 Find offsets of body mass decrease (times, at which amplitude reverses from positive to negative)
-
 ```{r, eval = F}
 timeOffset<-c()
 for ( i in 2:(length(insamp)-1)) {
    if((insamp[i-1]>0)& (insamp[i]<=0)) {
-       timeOffset=c(timeOffset, Time[i]);      
+       timeOffset=c(timeOffset, Time[i])      
     }
 }
 ```
+
 Plot the results
 ```{r, eval = F}
 plot(Data$y~Time,type="l")
@@ -139,9 +131,7 @@ abline(v=timeOffset,col="blue")
 ```
 
 ###Correction of CWT-results
-
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
-
 ```{r, eval = F}
 onoffsets<-read.csv("body_mass_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
@@ -154,48 +144,40 @@ onset
 ```{r, eval = F}
 onoffsets$onsetcor<-as.Date(NA)
 for(i in 1:nrow(onoffsets)){
-if(!is.na(onoffsets$onsetdate[i])){
-onoffsets$onsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$onsetdate[i]))),]$DATE
-}
+   if(!is.na(onoffsets$onsetdate[i]))
+      onoffsets$onsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)
+                                          -as.numeric(onoffsets$onsetdate[i]))),]$DATE
 }
 ```
 
 offset
-
 ```{r, eval = F}
 onoffsets$offsetcor<-as.Date(NA)
 for(i in 1:nrow(onoffsets)){
-if(!is.na(onoffsets$offsetdate[i])){
-onoffsets$offsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$offsetdate[i]))),]$DATE
-}
+   if(!is.na(onoffsets$offsetdate[i]))
+       onoffsets$offsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)
+                                           -as.numeric(onoffsets$offsetdate[i]))),]$DATE
 }
 ```
 
 The onsets and offsets as days of year
-
 ```{r, eval = F}
 onoffsets$onsetjdcor<-as.POSIXlt(onoffsets$onsetcor,format="%d-%m-%Y")$yday
 onoffsets$offsetjdcor<-as.POSIXlt(onoffsets$offsetcor,format="%d-%m-%Y")$yday
 ```
 
 Center onset of pre-alternate molt by the previous onset
-
 ```{r, eval = F}
 onoffsets$on_rel<-NA
-	
-	Res<-onoffsets$onsetjdcor[1]
-
-		for(i in 2:nrow(onoffsets)){
-			vec<-seq(onoffsets$onsetjdcor[i]-1*365, onoffsets$onsetjdcor[i]+1*365, by=365)
-						
-			Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous observation
-			
-						 
-		}
-		onoffsets$on_rel<-Res
+Res<-onoffsets$onsetjdcor[1]
+for(i in 2:nrow(onoffsets)){
+    vec<-seq(onoffsets$onsetjdcor[i]-1*365, onoffsets$onsetjdcor[i]+1*365, by=365)
+    Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous observation
+}
+onoffsets$on_rel<-Res
 ```
-Calculate offsets of body mass decrease, based on the corresponding centered onsets
 
+Calculate offsets of body mass decrease, based on the corresponding centered onsets
 ```{r, eval = F}
 onoffsets$off_rel<-as.numeric(onoffsets$on_rel+(onoffsets$offsetcor-onoffsets$onsetcor))
 ```
