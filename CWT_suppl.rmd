@@ -24,7 +24,7 @@ example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
 example_data<-example_data[order(example_data$DATE),]
 ```
 
-##<a name="1 BODY MASS"></a>§1 BODY MASS
+##<a name="#1-body-mass"></a>§1 BODY MASS
 
 ###Prepare the data for CWT
 ```{r, eval = F}
