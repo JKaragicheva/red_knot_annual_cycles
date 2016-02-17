@@ -32,9 +32,9 @@ Xout<-seq(min(example_data$DATE), max(example_data$DATE), 1)
 Order<-order(example_data$DATE)
 Data<-(approx(example_data$DATE[Order],y=example_data$MASS[Order], xout=Xout))
 Data_vec<-Data$y
-variance = sd(Data_vec)^2;
-m_data=mean(Data_vec);
-Data_vec_centered = (Data_vec - m_data)/sqrt(variance) ;
+variance = sd(Data_vec)^2
+m_data=mean(Data_vec)
+Data_vec_centered = (Data_vec - m_data)/sqrt(variance)
 ```
 ###CWT
 Set parameters
