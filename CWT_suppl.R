@@ -1,0 +1,840 @@
+
+#Continuous wavelet transformation used to define onsets and offsets of life-cycle stages in red knots
+Here we provide an example of defining onset and offset dates for body mass increase (§1 Body mass), pre-alternate and pre-b asicmolt (§2 Plumage molt) and wing molt (§3 Wing molt) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
+##General remarks
+Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back the closest to the obtained onsets and offsets dates of measurements in the raw data. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
+
+Parameters of CWT and frequency bands were chosen arbitrarily for each type of measurements, after several runs with varying parameters, based on visual assessment of plotted CWT results. For “mother” wavelet, we tried morlet, mexican hat (DOG) and paul wavelets and chose the latter for all the time series as the one providing the most relevant results with the measurements obtained in both, ambient (regular cycles) and constant (drifting cycles) photoperiods.
+
+To define characteristic points (onsets and offsets), we assessed amplitude of wavelet-transformed time series of a corresponding frequency band. Time locations, at which amplitude reversed from negative to positive were assigned onsets, and sign-change points from positive to negative were defined as offsets.
+
+Because our time series are circular (with an average period of 1 year), a challenging part was to adequately evaluate the periodicity in constant photoperiod, when the cycles started drifting, and two onsets or offsets were oftentimes observed in the same year or, other way around, with an interval close to two years. To cope with this complication, we centered the date (in days of year) of each characteristic point by the date of previous characteristic point of the same type (i. e., onset or offset) in the time series from the same individual.
+
+Particularities of defining the characteristic points are given for each type of the measurements, in the corresponding paragraphs.
+
+##Packages used and the example dataset (one individual red knot)
+```{r, eval = F}
+library(biwavelet)
+library(pracma)
+example_data<-read.csv("Example_bird_for_wavelet_cor.csv",stringsAsFactors=F)
+example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
+example_data<-example_data[order(example_data$DATE),]
+```
+
+##§1 BODY MASS
+
+###Prepare the data for CWT
+```{r, eval = F}
+Xout<-seq(min(example_data$DATE), max(example_data$DATE), 1)
+Order<-order(example_data$DATE)
+Data<-(approx(example_data$DATE[Order],y=example_data$MASS[Order], xout=Xout))
+Data_vec<-Data$y
+variance = sd(Data_vec)^2;
+m_data=mean(Data_vec);
+Data_vec_centered = (Data_vec - m_data)/sqrt(variance) ;
+```
+###CWT
+Set parameters
+
+```{r, eval = F}
+n = length(Data_vec_centered);
+dt = 1/365;
+Time = c(0:(length(Data_vec_centered)-1));  
+pad = 1;      
+dj=7/365;
+s0 = 2*dt;
+mother="paul"
+ 
+d<-cbind(Time, Data_vec_centered)
+```
+Run CWT
+
+```{r, eval = F}
+tmp<-wt (d=d,pad = pad, dt = dt,  dj = dj, s0 = s0,  mother=mother, lag1=0.72, do.sig=F)
+
+#Assess CWT surface
+
+plot(tmp)
+```
+
+Choose frequency band
+
+```{r, eval = F}
+Cdelta=3.476;
+
+Ind<-which(tmp$period>=3e01 & tmp$period<=1e03)
+```
+Assess amplitude
+
+```{r, eval = F}
+red_power=tmp$power[Ind,]
+red_power=tmp$power.corr[Ind,]
+red_period=tmp$period[Ind];
+
+red_AP_real=Re(tmp$wave[Ind,]);
+red_scale=tmp$scale[Ind];
+
+insamp<-c()
+insamp2<-c()
+Peaks_all<-c()
+for (i in 1:length(Time)) {
+    I_pksA=matrix(0, 1,5); 
+
+    Peaks=findpeaks(red_power[,i]);
+	if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+	
+	Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
+	
+    pks=Peaks[,1]
+    loc=Peaks[,2]
+	
+	s_pks=sort(pks,decreasing=T);
+	I_pks=order(pks,decreasing=T);
+    
+    for (ki in 1:length(I_pks)) {
+        I_pksA[ki]=I_pks[ki];
+    }
+    
+    
+    if(I_pksA[1]==0)   {     
+         maxpower=max(red_power[,i]);
+         posfreq1=which.max(red_power[,i]);
+              
+    } else {
+                  
+   posfreq1=loc[I_pks[1]];
+   maxpower=pks[I_pks[1]];
+     }
+     cf11=(variance*dt)/(Cdelta*red_scale[posfreq1]);
+     cf1=sqrt(cf11);
+     insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
+     insamp2=c(insamp2, red_AP_real[posfreq1,i])
+        
+}
+
+Peaks_all<-as.data.frame(Peaks_all)
+names(Peaks_all)<-c("val", "loc", "start", "end", "i")
+time_minp=0;
+dtmin=1;
+```
+
+Find onsets of body mass increase (times, at which amplitude reverses from negative to positive)
+
+```{r, eval = F}
+timeOnset<-c()
+
+for ( i in 2:(length(insamp)-1)) {
+   if((insamp[i-1]<=0)& (insamp[i]> 0)) {
+       timeOnset=c(timeOnset, Time[i]);      
+    }
+}
+```
+
+Find offsets of body mass decrease (times, at which amplitude reverses from positive to negative)
+
+```{r, eval = F}
+timeOffset<-c()
+for ( i in 2:(length(insamp)-1)) {
+   if((insamp[i-1]>0)& (insamp[i]<=0)) {
+       timeOffset=c(timeOffset, Time[i]);      
+    }
+}
+```
+Plot the results
+```{r, eval = F}
+plot(Data$y~Time,type="l")
+abline(v=timeOnset,col="red")
+abline(v=timeOffset,col="blue")
+```
+
+###Correction of CWT-results
+
+The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
+
+```{r, eval = F}
+onoffsets<-read.csv("body_mass_dates.csv",stringsAsFactors=F)
+onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
+onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%Y-%m-%d")
+```
+
+Find the nearest to the defined with CWT onsets and offsets
+onset
+
+```{r, eval = F}
+onoffsets$onsetcor<-as.Date(NA)
+for(i in 1:nrow(onoffsets)){
+if(!is.na(onoffsets$onsetdate[i])){
+onoffsets$onsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$onsetdate[i]))),]$DATE
+}
+}
+```
+
+offset
+
+```{r, eval = F}
+onoffsets$offsetcor<-as.Date(NA)
+for(i in 1:nrow(onoffsets)){
+if(!is.na(onoffsets$offsetdate[i])){
+onoffsets$offsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$offsetdate[i]))),]$DATE
+}
+}
+```
+
+The onsets and offsets as days of year
+
+```{r, eval = F}
+onoffsets$onsetjdcor<-as.POSIXlt(onoffsets$onsetcor,format="%d-%m-%Y")$yday
+onoffsets$offsetjdcor<-as.POSIXlt(onoffsets$offsetcor,format="%d-%m-%Y")$yday
+```
+
+Center onset of pre-alternate molt by the previous onset
+
+```{r, eval = F}
+onoffsets$on_rel<-NA
+	
+	Res<-onoffsets$onsetjdcor[1]
+
+		for(i in 2:nrow(onoffsets)){
+			vec<-seq(onoffsets$onsetjdcor[i]-1*365, onoffsets$onsetjdcor[i]+1*365, by=365)
+						
+			Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous observation
+			
+						 
+		}
+		onoffsets$on_rel<-Res
+```
+Calculate offsets of body mass decrease, based on the corresponding centered onsets
+
+```{r, eval = F}
+onoffsets$off_rel<-as.numeric(onoffsets$on_rel+(onoffsets$offsetcor-onoffsets$onsetcor))
+```
+
+
+
+##§2 PLUMAGE MOLT
+
+###Prepare the data for CWT
+
+```{r, eval = F}
+Data<-(approx(example_data$DATE[Order],y=example_data$PLUM[Order], xout=Xout))
+Data_vec<-Data$y
+variance = sd(Data_vec)^2;
+m_data=mean(Data_vec);
+Data_vec_centered = (Data_vec - m_data)/sqrt(variance) ;
+```
+
+###CWT
+Set parameters
+
+```{r, eval = F}
+n = length(Data_vec_centered);
+dt = 1/365;
+Time = c(0:(length(Data_vec_centered)-1));  
+pad = 1;      
+dj=7/365;
+s0=64
+mother="paul"
+ 
+d<-cbind(Time, Data_vec_centered)
+```
+
+Run CWT
+
+```{r, eval = F}
+tmp<-wt (d=d,pad = pad, dt = dt,  dj = dj, s0 = s0,  mother=mother, lag1=0.72, do.sig=F)
+```
+
+#Assess CWT surface
+
+plot(tmp)
+```
+
+Choose frequency band
+
+```{r, eval = F}
+Cdelta=3.476;
+
+Ind<-which(tmp$period>=75 & tmp$period<=1000)
+```
+
+Assess amplitude
+
+```{r, eval = F}
+red_power=tmp$power[Ind,]
+red_power=tmp$power.corr[Ind,]
+red_period=tmp$period[Ind];
+
+red_AP_real=Re(tmp$wave[Ind,]);
+red_scale=tmp$scale[Ind];
+
+insamp<-c()
+insamp2<-c()
+Peaks_all<-c()
+for (i in 1:length(Time)) {
+    I_pksA=matrix(0, 1,5); 
+
+    Peaks=findpeaks(red_power[,i]);
+	if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+	
+	Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
+	
+    pks=Peaks[,1]
+    loc=Peaks[,2]
+	
+	s_pks=sort(pks,decreasing=T);
+	I_pks=order(pks,decreasing=T);
+    
+    for (ki in 1:length(I_pks)) {
+        I_pksA[ki]=I_pks[ki];
+    }
+    
+    
+    if(I_pksA[1]==0)   {     
+         maxpower=max(red_power[,i]);
+         posfreq1=which.max(red_power[,i]);
+              
+    } else {
+                  
+   posfreq1=loc[I_pks[1]];
+   maxpower=pks[I_pks[1]];
+     }
+     cf11=(variance*dt)/(Cdelta*red_scale[posfreq1]);
+     cf1=sqrt(cf11);
+     insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
+     insamp2=c(insamp2, red_AP_real[posfreq1,i])
+        
+}
+
+Peaks_all<-as.data.frame(Peaks_all)
+names(Peaks_all)<-c("val", "loc", "start", "end", "i")
+
+time_minp=0;
+dtmin=1;
+```
+
+Find onsets of pre-alternate plumage molt (times, at which amplitude reverses from negative to positive) 
+
+```{r, eval = F}
+timeOnset<-c()
+
+for ( i in 2:(length(insamp)-1)) {
+   if((insamp[i-1]<=0)& (insamp[i]> 0)) {
+       timeOnset=c(timeOnset, Time[i]);      
+    }
+}
+```
+
+Find offsets of pre-basic plumage molt (times, at which amplitude reverses from positive to negative)
+
+```{r, eval = F}
+timeOffset<-c()
+
+for ( i in 2:(length(insamp)-1)) {
+   if((insamp[i-1]>0)& (insamp[i]<=0)) {
+       timeOffset=c(timeOffset, Time[i]);      
+    }
+}
+```
+
+Plot the results
+
+```{r, eval = F}
+Onsetdate<-as.data.frame(Data$x[timeOnset])
+names(Onsetdate)<-"onset"
+Onsetdate$Yr<-as.integer(substr(Onsetdate$onset,1,4))
+plot(Data$y~Data$x,type="l")
+abline(v=Onsetdate$onset,col="red")
+Offsetdate<-as.data.frame(Data$x[timeOffset])
+names(Offsetdate)<-"offset"
+Offsetdate$Yr<-as.integer(substr(Offsetdate$offset,1,4))
+abline(v=Offsetdate$offset,col="blue")
+```
+
+
+###Correction of CWT-results
+
+The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
+
+```{r, eval = F}
+onoffsets<-read.csv("plumage_molt_dates.csv",stringsAsFactors=F)
+onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%m/%d/%Y")
+onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%m/%d/%Y")
+```
+
+Find the nearest to the defined with CWT onsets and offsets
+onset
+
+```{r, eval = F}
+onoffsets$onsetcor<-as.Date(NA)
+for(i in 1:nrow(onoffsets)){
+if(!is.na(onoffsets$onsetdate[i])){
+onoffsets$onsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$onsetdate[i]))),]$DATE
+}
+}
+```
+
+offset
+
+```{r, eval = F}
+onoffsets$offsetcor<-as.Date(NA)
+for(i in 1:nrow(onoffsets)){
+if(!is.na(onoffsets$offsetdate[i])){
+onoffsets$offsetcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets$offsetdate[i]))),]$DATE
+}
+}
+```
+
+Although the CWT-defined onsets and offsets roughly represented the boundaries of the period between pre-alternate and pre-basic plumage molts, most of the times, they did not match, either the beginning or the end of these stages, precisely enough. Therefore, we used the CWT-defined characteristic points to find the actual dates of start and end of molts. 
+
+```{r, eval = F}
+#make fields for the corrected onsets of pre-alternate molt and offsets of pre-basic molt
+onoffsets$onsetcor_1<-as.Date(NA)
+onoffsets$offsetcor_2<-as.Date(NA)
+
+#for each year (beginning from the second) take the period between the CWT-defined onset of pre-alternate molt and preceding (!) offset of pre-basic molt and define the most common molt score observed during the period (baseline score)
+
+for(i in 2:length(unique(onoffsets$Year))){ 
+onreal<-onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor
+off1real<-onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor
+
+plat<-example_data[example_data$DATE>=off1real & example_data$DATE<=onreal,]
+
+#if the period is not 0 and both, CWT-defined onset and offset exist, find the most common molt score within this period (the baseline)
+if (nrow(plat)>0 & !is.na(onreal) & !is.na(off1real)){
+
+nr<-data.frame(matrix(nrow=7,ncol=2)) # 
+for(b in 1:length(unique(plat$PLUM))){
+nr$X1[b]<-nrow(plat[plat$PLUM==unique(plat$PLUM)[b],])
+nr$X2[b]<-unique(plat$PLUM)[b]
+}
+nr<-nr[!is.na(nr$X1),]
+base<-min(nr[nr$X1==max(nr$X1),]$X2) 
+#if the baseline score is larger than 4 (rather bright plumage, which sometimes happened under constant photoperiod), set it to 4
+if (base>4){ 
+base<-4
+}
+
+#compare the molt scores at the CWT-defined dates of onset of pre-alternate molt with the baseline score
+
+if (onreal %in% example_data$DATE){
+#if the molt score on the CWT-defined date of onset of pre-alternate plumage molt is larger than baseline, re-set the onset date to the first earlier date, when molt score was equal the baseline value 
+if (example_data[example_data$DATE==onreal,]$PLUM>base){
+d<-rev(which(example_data$PLUM<=base & example_data$DATE<onreal))[1]
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-example_data$DATE[d]
+#otherwise, re-set the onset date to the last date after the cwt-defined onset, when the molt score was smaller than the baseline value
+} else {
+d<-which(example_data$PLUM>base & example_data$DATE>onreal)[1]-1
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-example_data$DATE[d]
+}
+} 
+
+#compare the molt scores at the CWT-defined dates of offset of pre-basic molt with the baseline score
+
+if ((off1real %in% example_data$DATE)){
+#if the molt score on the CWT-defined date of offset of pre-basic plumage molt is larger than baseline, re-set the offset date to the first date after the cwt-defined one, when molt score was equal to or smaller than the baseline value 
+if (example_data[example_data$DATE==off1real,]$PLUM>base){
+b<-which(example_data$PLUM<=base & example_data$DATE>off1real)[1]
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-example_data$DATE[b]
+#otherwise, re-set the offset date before the CWT-defined offset, to the next date after the last date, when the molt score was larger than the baseline value
+} else {
+b<-rev(which(example_data$PLUM>base & example_data$DATE<=off1real))[1]+1
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-example_data$DATE[b]
+}
+}
+#if the CWT-defined onset and/or offset date do not exist, or the period between them is 0, then set onset and offset dates as the cwt-defined onset and offset.
+} else {
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-onreal
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-off1real
+}
+}
+```
+
+plot the results
+
+```{r, eval = F}
+plot(example_data[order(example_data$DATE),]$PLUM~example_data[order(example_data$DATE),]$DATE,type="l")
+abline(v=onoffsets$onsetcor_1)
+abline(v=onoffsets$offsetcor_2,col="plum")
+```
+
+The above code does not allow to find onset date of pre-alternate plumage molt for the first year and offset date of pre-basic plumage molt for the last year of observations. Let us do it.
+
+```{r, eval = F}
+#First year onset of pre-alternate molt
+
+firstyr<-onoffsets[which.min(onoffsets$Year),]
+onreal<-firstyr$onsetcor
+plat<-example_data[example_data$DATE<=onreal & example_data$DATE>(onreal-300),]
+
+if (nrow(plat)>0){
+
+nr<-data.frame(matrix(nrow=7,ncol=2))
+for(b in 1:length(unique(plat$PLUM))){
+nr$X1[b]<-nrow(plat[plat$PLUM==unique(plat$PLUM)[b],])
+nr$X2[b]<-unique(plat$PLUM)[b]
+}
+nr<-nr[!is.na(nr$X1),]
+base<-min(nr[nr$X1==max(nr$X1),]$X2)
+if (base>4){
+base<-4
+}
+if (onreal %in% example_data$DATE){
+if (example_data[example_data$DATE==onreal,]$PLUM>base){
+d<-rev(which(example_data$PLUM<=base & example_data$DATE<onreal))[1]
+onoffsets[onoffsets$Year==firstyr$Year,]$onsetcor_1<-example_data$DATE[d]
+
+} else {
+d<-which(example_data$PLUM>base & example_data$DATE>onreal)[1]-1
+onoffsets[onoffsets$Year==firstyr$Year,]$onsetcor_1<-example_data$DATE[d]
+
+}
+}
+} else {
+example_data[example_data$Year==lastyr$Year,]$onsetcor_1<-onreal
+}
+
+
+#Last year offset of pre-basic molt
+lastyr<-onoffsets[which.max(onoffsets$Year),]
+
+off1real<-lastyr$offsetcor
+plat<-example_data[example_data$DATE>=off1real & example_data$DATE<(off1real+300),]
+
+if (nrow(plat)>0){
+
+nr<-data.frame(matrix(nrow=7,ncol=2))
+for(b in 1:length(unique(plat$PLUM))){
+nr$X1[b]<-nrow(plat[plat$PLUM==unique(plat$PLUM)[b],])
+nr$X2[b]<-unique(plat$PLUM)[b]
+}
+nr<-nr[!is.na(nr$X1),]
+base<-min(nr[nr$X1==max(nr$X1),]$X2)
+if (base>4){
+base<-4
+}
+if ((off1real %in% example_data$DATE)){
+if (example_data[example_data$DATE==off1real,]$PLUM>base){
+b<-which(example_data$PLUM<=base & example_data$DATE>off1real)[1]
+onoffsets[onoffsets$Year==lastyr$Year,]$offsetcor_2<-example_data$DATE[b]
+} else {
+b<-rev(which(example_data$PLUM>base & example_data$DATE<=off1real))[1]+1
+onoffsets[onoffsets$Year==lastyr$Year,]$offsetcor_2<-example_data$DATE[b]
+}
+}
+} else {
+onoffsets[onoffsets$Year==lastyr$Year,]$offsetcor_2<-off1real
+}
+```
+
+For each year, we have defined the beginning and the end of molt period, i. e. onset of pre-alternate molt and offset of pre-basic molt. Now we need to find offsets of pre-breeding and onsets of pre-basic molt. For this, we repeat the procedure we used for finding onsets of pre-alternate molt and offsets of pre-basic molt
+
+```{r, eval = F}
+#Make fields for the offsets of pre-breeding and onsets of pre-basic molt
+onoffsets$offsetcor_1<-as.Date(NA)
+onoffsets$onsetcor_2<-as.Date(NA)
+
+# define full plumage score (it varies among individuals and between years)
+#for each year (beginning from the second) take the period between the CWT-defined onset of pre-alternate molt and the following offset of pre-basic molt...
+for(i in 1:length(unique(onoffsets$Year))){
+
+on<-onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1
+off<-onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_2
+
+plat<-example_data[example_data$DATE<=off & example_data$DATE>=on,]
+
+if (nrow(plat)>0 & !is.na(on)){
+#if the period is not 0 and both, CWT-defined onset and offset exist, find the most common molt score within this period (the full plumage)
+nr<-data.frame(matrix(nrow=8,ncol=2)) # 
+for(b in 1:length(unique(plat$PLUM))){
+nr$X1[b]<-nrow(plat[plat$PLUM==unique(plat$PLUM)[b],])
+nr$X2[b]<-unique(plat$PLUM)[b]
+}
+nr<-nr[!is.na(nr$X1),]
+base<-max(nr[nr$X1==max(nr$X1),]$X2) 
+
+#compare molt scores at the CWT-defined onsets and offsets to the full plumage score in a corresponding year and set offsets of pre-alternate molt and onset of pre-basic molt at the boundaries of the period of full plumage.
+b<-which(example_data$PLUM>=base & example_data$DATE>on)[1]
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-example_data$DATE[b]
+d<-rev(which(example_data$PLUM>=base & example_data$DATE<off))[1]
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-example_data$DATE[d]
+
+} else {
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-as.Date(NA)
+onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-as.Date(NA)
+}
+}
+```
+
+Present onsets of pre-alternate molt as days of year and center each of them by previous onsets
+
+```{r, eval = F}
+onoffsets$onsetcor_1_jd<-as.POSIXlt(onoffsets$onsetcor_1,format="%d-%m-%Y")$yday
+
+#Center onset of pre-alternate molt by the previous onset
+
+onoffsets$onset1_rel<-NA
+	Res<-onoffsets$onsetcor_1_jd[1]
+
+			for(i in 2:nrow(onoffsets)){
+			vec<-seq(onoffsets$onsetcor_1_jd[i]-1*365, onoffsets$onsetcor_1_jd[i]+1*365, by=365)#Julian Date???
+	
+			Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous
+			
+						 
+		}
+		onoffsets$onset1_rel<-Res
+```
+	
+Calculate offsets of pre-alternate molt and onsets and offsets of pre-basic molt (all as the day of year), based on the centered onset of pre-alternate molt in the same year
+
+```{r, eval = F}
+onoffsets$offset1_rel<-NA
+onoffsets$offset1_rel<-onoffsets$onset1_rel+(onoffsets$offsetcor_1-onoffsets$onsetcor_1)
+onoffsets$onset2_rel<-NA
+onoffsets$onset2_rel<-onoffsets$offset1_rel+(onoffsets$onsetcor_2-onoffsets$offsetcor_1)
+onoffsets$offset2_rel<-NA
+onoffsets$offset2_rel<-onoffsets$onset2_rel+(onoffsets$offsetcor_2-onoffsets$onsetcor_2)
+```
+
+##§3 WING MOLT
+
+Wing molt had a baseline score of 0, and, therefore, its onset could be defined as the last day of the baseline score. However, there were occasional non-zero measurements, not related to the molt process, as well as zero scores obtained in the course of molt (especially in constant photoperiod). Hence, we first defined onsets using CWT, then found all the points of change from zero to positive values in the interpolated for CWT data and, for each CWT-defined onset picked the closest point of change from zero to positive score. These corrected onset dates further were used for finding dates of completion of wing molt (offsets). The latter we defined as the dates of the first maximal score between each onset and next 0 observed in at least 4 months (to avoid local zeros).
+ 
+##Prepare the data for CWT
+
+```{r, eval = F}
+#As soon as the molt of wing feathers was completed (score 50), we reset it to 0. Because wing molt was oftentimes scored 50 long after the new feathers have completely grown, we limited wing molt score at 49, and all the larger scores assigned 0.
+
+example_data$PTOT[example_data$PTOT>49]<-0
+example_data<-example_data[!is.na(example_data$DATE),]
+
+Xout<-seq(min(example_data$DATE), max(example_data$DATE), 1)
+Order<-order(example_data$DATE)
+Data<-(approx(example_data$DATE[Order],y=example_data$PTOT[Order], xout=Xout))
+Data_vec<-Data$y
+variance = sd(Data_vec)^2;
+m_data=mean(Data_vec);
+Data_vec_centered = (Data_vec - m_data)/sqrt(variance) ;
+```
+
+###CWT
+Set parameters
+
+```{r, eval = F}
+n = length(Data_vec_centered);
+dt = 1/365;
+Time = c(0:(length(Data_vec_centered)-1));  
+pad = 1;      
+dj=7/365;
+s0 = 25;
+mother="paul"
+d<-cbind(Time, Data_vec_centered)
+```
+
+Run CWT
+
+```{r, eval = F}
+tmp<-wt (d=d,pad = pad, dt = dt,  dj = dj, s0 = s0,  mother=mother, lag1=0.72, do.sig=F)
+
+#Assess CWT surface
+
+plot(tmp)
+```
+
+Choose frequency band 
+
+```{r, eval = F}
+Cdelta=3.476;
+
+Ind<-which(tmp$period>=3e01 & tmp$period<=1e03)
+```
+
+Assess amplitude
+
+```{r, eval = F}
+red_power=tmp$power[Ind,]
+red_power=tmp$power.corr[Ind,]
+red_period=tmp$period[Ind];
+
+red_AP_real=Re(tmp$wave[Ind,]);
+red_scale=tmp$scale[Ind];
+
+insamp<-c()
+insamp2<-c()
+Peaks_all<-c()
+for (i in 1:length(Time)) {
+    I_pksA=matrix(0, 1,5); 
+
+    Peaks=findpeaks(red_power[,i]);
+	if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+	
+	Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
+	
+    pks=Peaks[,1]
+    loc=Peaks[,2]
+	
+	s_pks=sort(pks,decreasing=T);
+	I_pks=order(pks,decreasing=T);
+	
+    for (ki in 1:length(I_pks)) {
+        I_pksA[ki]=I_pks[ki];
+    }
+    
+    
+    if(I_pksA[1]==0)   {     
+         maxpower=max(red_power[,i]);
+         posfreq1=which.max(red_power[,i]);
+              
+    } else {
+                  
+   posfreq1=loc[I_pks[1]];
+   maxpower=pks[I_pks[1]];
+     }
+     cf11=(variance*dt)/(Cdelta*red_scale[posfreq1]);
+     cf1=sqrt(cf11);
+     insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
+     insamp2=c(insamp2, red_AP_real[posfreq1,i])
+        
+}
+
+Peaks_all<-as.data.frame(Peaks_all)
+names(Peaks_all)<-c("val", "loc", "start", "end", "i")
+time_minp=0;
+dtmin=1;
+```
+
+Find onsets of molt (time locations, at which amplitude reverses from negative to positive) 
+
+```{r, eval = F}
+timeOnset<-c()
+
+for ( i in 2:(length(insamp)-1)) {
+   if((insamp[i-1]<=0)& (insamp[i]> 0)) {
+       timeOnset=c(timeOnset, Time[i]);      
+    }
+}
+```
+
+Plot the results
+
+```{r, eval = F}
+Onsetdate<-as.data.frame(Data$x[timeOnset])
+names(Onsetdate)<-"onset"
+Onsetdate$Yr<-as.integer(substr(Onsetdate$onset,1,4))
+plot(Data$y~Data$x,type="l")
+abline(v=Onsetdate$onset,col="red")
+```
+
+
+###Correction of CWT-results
+
+The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
+
+```{r, eval = F}
+onoffsets<-read.csv("wing_molt_dates.csv",stringsAsFactors=F)
+onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
+```
+
+In the interpolated for CWT raw data, find all the dates in which molt score changes from 0 to a positive value...
+
+```{r, eval = F}
+charpoints<-c(as.Date(NA))
+for(i in 2:(length(Data$x)-1)){
+y1<-Data$y[i-1]
+y2<-Data$y[i]
+y3<-Data$y[i+1]
+if (y1==0 & y2==0 & y3>0){
+add<-Data$x[i]
+charpoints<-c(charpoints,add)
+}
+}
+charpoints<-charpoints[-1]
+
+#assess the results
+plot(Data$y~Data$x,type="l")
+abline(v=charpoints,col="blue")
+```
+
+of the found change-points, find the nearest to the defined with CWT onsets and assign them as corrected onsets
+
+```{r, eval = F}
+onoffsets$onsetcor<-as.Date(NA)
+for(i in 1:nrow(onoffsets)){
+onoffsets$onsetcor[i]<-charpoints[which(abs(onoffsets$onsetdate[i]-charpoints)==min(abs(onoffsets$onsetdate[i]-charpoints)))]
+}
+plot(Data$y~Data$x,type="l")
+abline(v=onoffsets$onsetcor,col="red")
+```
+
+Define dates of completion of wing molt
+
+```{r, eval = F}
+#make a new column for the corrected date of wing molt completion
+onoffsets$endmoult<-as.Date(NA)
+
+for(i in 1:nrow(onoffsets)){
+#first 0 
+nulls<-Data$x[which(Data$y==0)]
+set<-nulls[which(nulls>(onoffsets$onsetcor[i]+120))]
+limit<-min(set)
+samp<-Data$y[which(Data$x > onoffsets$onsetcor[i] & Data$x<limit)]
+maximums<-max(samp)
+maximumsdat<-Data$x[which(Data$x > onoffsets$onsetcor[i] & Data$x<limit & Data$y==maximums)]
+m<-min(maximumsdat)
+onoffsets$endmoult[i]<-m
+}
+
+#Plot the results
+plot(Data$y~Data$x,type="l")
+abline(v=onoffsets$onsetcor,col="red")
+abline(v=onoffsets$endmoult,col="blue")
+```
+
+Take the closest point from raw data (measurements taken once a week)
+
+```{r, eval = F}
+onoffsets_cor<-onoffsets
+onoffsets_cor$startcor<-as.Date(NA)
+onoffsets_cor$endcor<-as.Date(NA)
+
+#onset
+
+for(i in 1:nrow(onoffsets_cor)){
+if(!(onoffsets_cor$onsetcor[i]==k$DATE[1])){
+onoffsets_cor$startcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets_cor$onsetcor[i]))),]$DATE
+}
+}
+
+#offset
+for(i in 1:nrow(onoffsets_cor)){
+if(!(onoffsets_cor$endmoult[i]==k$DATE[1]) & !is.na(onoffsets_cor$endmoult[i])){
+onoffsets_cor$endcor[i]<-example_data[which.min(abs(as.numeric(example_data$DATE)-as.numeric(onoffsets_cor$endmoult[i]))),]$DATE
+}
+}
+```
+
+Present onset dates as days of year and center by the previous onset
+
+```{r, eval = F}
+onoffsets_cor$startjd<-as.POSIXlt(onoffsets_cor$startcor,format="%d-%m-%Y")$yday
+
+onoffsets_cor$startjd_cor<-NA
+	Res<-onoffsets_cor$startjd[1]
+
+		for(i in 2:nrow(onoffsets_cor)){
+			vec<-seq(onoffsets_cor$startjd[i]-1*365, onoffsets_cor$startjd[i]+1*365, by=365)
+	
+			Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous
+			
+						 
+		}
+		onoffsets_cor$startjd_cor<-Res
+```
+
+Calculate offset dates (as the day of year), based on corresponding onset dates
+
+```{r, eval = F}
+onoffsets_cor$endjd_cor<-as.numeric(onoffsets_cor$startjd_cor+(onoffsets_cor$endcor-onoffsets_cor$startcor))
+```
+
+
