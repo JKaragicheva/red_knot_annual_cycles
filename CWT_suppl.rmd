@@ -18,7 +18,8 @@ Particularities of defining the characteristic points are given for each type of
 library(biwavelet)
 library(pracma)
 # download data from GitHub
-download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv",
+download.file(
+"https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv",
    "Example_bird_for_wavelet_cor.csv")
 example_data<-read.csv("Example_bird_for_wavelet_cor.csv",stringsAsFactors=F)
 example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
@@ -40,7 +41,7 @@ Data_vec_centered = (Data_vec - m_data)/sqrt(variance)
 ###CWT
 Set parameters
 ```{r, eval = F}
-n = length(Data_vec_centered);
+n = length(Data_vec_centered) 
 dt = 1/365
 Time = c(0:(length(Data_vec_centered)-1))
 pad = 1
@@ -94,7 +95,7 @@ for (i in 1:length(Time)) {
        maxpower=pks[I_pks[1]]
    }
    cf11=(variance*dt)/(Cdelta*red_scale[posfreq1])
-   cf1=sqrt(cf11);
+   cf1=sqrt(cf11) 
    insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
    insamp2=c(insamp2, red_AP_real[posfreq1,i])
 }
@@ -134,7 +135,8 @@ abline(v=timeOffset,col="blue")
 ###Correction of CWT-results
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 ```{r, eval = F}
-download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/body_mass_dates.csv",
+download.file(
+"https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/body_mass_dates.csv",
    "body_mass_dates.csv")
 onoffsets<-read.csv("body_mass_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
@@ -198,11 +200,11 @@ Data_vec_centered = (Data_vec - m_data)/sqrt(variance)
 ###CWT
 Set parameters
 ```{r, eval = F}
-n = length(Data_vec_centered);
-dt = 1/365;
-Time = c(0:(length(Data_vec_centered)-1));  
-pad = 1;      
-dj=7/365;
+n = length(Data_vec_centered) 
+dt = 1/365 
+Time = c(0:(length(Data_vec_centered)-1))   
+pad = 1       
+dj=7/365 
 s0=64
 mother="paul"
 d<-cbind(Time, Data_vec_centered)
@@ -230,10 +232,10 @@ Assess amplitude
 ```{r, eval = F}
 red_power=tmp$power[Ind,]
 red_power=tmp$power.corr[Ind,]
-red_period=tmp$period[Ind];
+red_period=tmp$period[Ind] 
 
-red_AP_real=Re(tmp$wave[Ind,]);
-red_scale=tmp$scale[Ind];
+red_AP_real=Re(tmp$wave[Ind,]) 
+red_scale=tmp$scale[Ind] 
 
 insamp<-c()
 insamp2<-c()
@@ -249,7 +251,7 @@ for (i in 1:length(Time)) {
     s_pks=sort(pks,decreasing=T)
     I_pks=order(pks,decreasing=T)
     for (ki in 1:length(I_pks)) {
-        I_pksA[ki]=I_pks[ki];
+        I_pksA[ki]=I_pks[ki] 
     }
     if(I_pksA[1]==0)   {     
         maxpower=max(red_power[,i])
@@ -307,7 +309,8 @@ abline(v=Offsetdate$offset,col="blue")
 
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 ```{r, eval = F}
-download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/plumage_molt_dates.csv",
+download.file(
+"https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/plumage_molt_dates.csv",
    "plumage_molt_dates.csv")
 onoffsets<-read.csv("plumage_molt_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%m/%d/%Y")
@@ -545,9 +548,9 @@ Xout<-seq(min(example_data$DATE), max(example_data$DATE), 1)
 Order<-order(example_data$DATE)
 Data<-(approx(example_data$DATE[Order],y=example_data$PTOT[Order], xout=Xout))
 Data_vec<-Data$y
-variance = sd(Data_vec)^2;
-m_data=mean(Data_vec);
-Data_vec_centered = (Data_vec - m_data)/sqrt(variance) ;
+variance = sd(Data_vec)^2 
+m_data=mean(Data_vec) 
+Data_vec_centered = (Data_vec - m_data)/sqrt(variance)  
 ```
 
 ###CWT
@@ -572,7 +575,7 @@ plot(tmp)
 
 Choose frequency band 
 ```{r, eval = F}
-Cdelta=3.476;
+Cdelta=3.476 
 Ind<-which(tmp$period>=3e01 & tmp$period<=1e03)
 ```
 
@@ -587,34 +590,34 @@ insamp<-c()
 insamp2<-c()
 Peaks_all<-c()
 for (i in 1:length(Time)) {
-    I_pksA=matrix(0, 1,5); 
-    Peaks=findpeaks(red_power[,i]);
+    I_pksA=matrix(0, 1,5)  
+    Peaks=findpeaks(red_power[,i]) 
     if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]),
         which.max(red_power[,i]),0,0), ncol=4, nrow=1)
     Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
     pks=Peaks[,1]
     loc=Peaks[,2]
-    s_pks=sort(pks,decreasing=T);
-    I_pks=order(pks,decreasing=T);
+    s_pks=sort(pks,decreasing=T) 
+    I_pks=order(pks,decreasing=T) 
     for (ki in 1:length(I_pks)) {
-        I_pksA[ki]=I_pks[ki];
+        I_pksA[ki]=I_pks[ki] 
     }
     if(I_pksA[1]==0)   {     
-        maxpower=max(red_power[,i]);
-        posfreq1=which.max(red_power[,i]);
+        maxpower=max(red_power[,i]) 
+        posfreq1=which.max(red_power[,i]) 
     } else {
-        posfreq1=loc[I_pks[1]];
-        maxpower=pks[I_pks[1]];
+        posfreq1=loc[I_pks[1]] 
+        maxpower=pks[I_pks[1]] 
     }
     cf11=(variance*dt)/(Cdelta*red_scale[posfreq1])
-    cf1=sqrt(cf11);
+    cf1=sqrt(cf11) 
     insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
     insamp2=c(insamp2, red_AP_real[posfreq1,i])
 }
 Peaks_all<-as.data.frame(Peaks_all)
 names(Peaks_all)<-c("val", "loc", "start", "end", "i")
-time_minp=0;
-dtmin=1;
+time_minp=0 
+dtmin=1 
 ```
 
 Find onsets of molt (time locations, at which amplitude reverses from negative to positive) 
@@ -622,7 +625,7 @@ Find onsets of molt (time locations, at which amplitude reverses from negative t
 timeOnset<-c()
 for ( i in 2:(length(insamp)-1)) {
     if((insamp[i-1]<=0)& (insamp[i]> 0)) {
-        timeOnset=c(timeOnset, Time[i]);      
+        timeOnset=c(timeOnset, Time[i])       
     }
 }
 ```
@@ -641,7 +644,8 @@ abline(v=Onsetdate$onset,col="red")
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 
 ```{r, eval = F}
-download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/wing_molt_dates.csv",
+download.file(
+"https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/wing_molt_dates.csv",
    "wing_molt_dates.csv")
 onoffsets<-read.csv("wing_molt_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
