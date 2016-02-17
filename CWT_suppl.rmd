@@ -41,11 +41,11 @@ Set parameters
 
 ```{r, eval = F}
 n = length(Data_vec_centered);
-dt = 1/365;
-Time = c(0:(length(Data_vec_centered)-1));  
-pad = 1;      
-dj=7/365;
-s0 = 2*dt;
+dt = 1/365
+Time = c(0:(length(Data_vec_centered)-1))
+pad = 1
+dj=7/365
+s0 = 2*dt
 mother="paul"
  
 d<-cbind(Time, Data_vec_centered)
@@ -63,7 +63,7 @@ plot(tmp)
 Choose frequency band
 
 ```{r, eval = F}
-Cdelta=3.476;
+Cdelta=3.476
 
 Ind<-which(tmp$period>=3e01 & tmp$period<=1e03)
 ```
@@ -72,53 +72,41 @@ Assess amplitude
 ```{r, eval = F}
 red_power=tmp$power[Ind,]
 red_power=tmp$power.corr[Ind,]
-red_period=tmp$period[Ind];
-
-red_AP_real=Re(tmp$wave[Ind,]);
-red_scale=tmp$scale[Ind];
-
+red_period=tmp$period[Ind]
+red_AP_real=Re(tmp$wave[Ind,])
+red_scale=tmp$scale[Ind]
 insamp<-c()
 insamp2<-c()
 Peaks_all<-c()
 for (i in 1:length(Time)) {
-    I_pksA=matrix(0, 1,5); 
-
-    Peaks=findpeaks(red_power[,i]);
-	if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
-	
-	Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
-	
-    pks=Peaks[,1]
-    loc=Peaks[,2]
-	
-	s_pks=sort(pks,decreasing=T);
-	I_pks=order(pks,decreasing=T);
+   I_pksA=matrix(0, 1,5)
+   Peaks=findpeaks(red_power[,i])
+   if (is.null(Peaks)) Peaks<- matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+   Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
+   pks=Peaks[,1]
+   loc=Peaks[,2]
+   s_pks=sort(pks,decreasing=T)
+   I_pks=order(pks,decreasing=T)
     
-    for (ki in 1:length(I_pks)) {
-        I_pksA[ki]=I_pks[ki];
-    }
-    
-    
-    if(I_pksA[1]==0)   {     
-         maxpower=max(red_power[,i]);
-         posfreq1=which.max(red_power[,i]);
-              
-    } else {
-                  
-   posfreq1=loc[I_pks[1]];
-   maxpower=pks[I_pks[1]];
-     }
-     cf11=(variance*dt)/(Cdelta*red_scale[posfreq1]);
-     cf1=sqrt(cf11);
-     insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
-     insamp2=c(insamp2, red_AP_real[posfreq1,i])
-        
+   for (ki in 1:length(I_pks)) {
+        I_pksA[ki]=I_pks[ki]
+   }
+   if(I_pksA[1]==0)   {     
+        maxpower=max(red_power[,i])
+        posfreq1=which.max(red_power[,i])
+   } else {
+       posfreq1=loc[I_pks[1]]
+       maxpower=pks[I_pks[1]]
+   }
+   cf11=(variance*dt)/(Cdelta*red_scale[posfreq1])
+   cf1=sqrt(cf11);
+   insamp=c(insamp, cf1*red_AP_real[posfreq1,i])
+   insamp2=c(insamp2, red_AP_real[posfreq1,i])
 }
-
 Peaks_all<-as.data.frame(Peaks_all)
 names(Peaks_all)<-c("val", "loc", "start", "end", "i")
-time_minp=0;
-dtmin=1;
+time_minp=0
+dtmin=1
 ```
 
 Find onsets of body mass increase (times, at which amplitude reverses from negative to positive)
