@@ -1,6 +1,6 @@
 
 #Continuous wavelet transformation used to define onsets and offsets of life-cycle stages in red knots
-Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt (§2 Plumage molt) and wing molt (§3 Wing molt) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
+Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt]((#part-2---plumage-molt)))) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
 ##General remarks
 Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back the closest to the obtained onsets and offsets dates of measurements in the raw data. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
 
@@ -214,7 +214,7 @@ onoffsets$off_rel<-as.numeric(onoffsets$on_rel+(onoffsets$offsetcor-onoffsets$on
 
 
 
-##§2 PLUMAGE MOLT
+##Part 2 Plumage molt
 
 ###Prepare the data for CWT
 
@@ -599,7 +599,7 @@ onoffsets$offset2_rel<-NA
 onoffsets$offset2_rel<-onoffsets$onset2_rel+(onoffsets$offsetcor_2-onoffsets$onsetcor_2)
 ```
 
-##§3 WING MOLT
+##Part 3 Wing molt
 
 Wing molt had a baseline score of 0, and, therefore, its onset could be defined as the last day of the baseline score. However, there were occasional non-zero measurements, not related to the molt process, as well as zero scores obtained in the course of molt (especially in constant photoperiod). Hence, we first defined onsets using CWT, then found all the points of change from zero to positive values in the interpolated for CWT data and, for each CWT-defined onset picked the closest point of change from zero to positive score. These corrected onset dates further were used for finding dates of completion of wing molt (offsets). The latter we defined as the dates of the first maximal score between each onset and next 0 observed in at least 4 months (to avoid local zeros).
  
