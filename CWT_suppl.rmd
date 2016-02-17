@@ -1,6 +1,6 @@
 
 #Continuous wavelet transformation used to define onsets and offsets of life-cycle stages in red knots
-Here we provide an example of defining onset and offset dates for body mass increase ([§1 Body mass](#1-body-mass)), pre-alternate and pre-b asicmolt (§2 Plumage molt) and wing molt (§3 Wing molt) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
+Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#1-body-mass)), pre-alternate and pre-b asicmolt (§2 Plumage molt) and wing molt (§3 Wing molt) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results. 
 ##General remarks
 Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back the closest to the obtained onsets and offsets dates of measurements in the raw data. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
 
@@ -24,7 +24,7 @@ example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
 example_data<-example_data[order(example_data$DATE),]
 ```
 
-##<a name="#1-body-mass"></a>§1 BODY MASS
+##Part 1 - Body mass
 
 ###Prepare the data for CWT
 ```{r, eval = F}
