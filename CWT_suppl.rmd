@@ -77,7 +77,8 @@ Peaks_all<-c()
 for (i in 1:length(Time)) {
    I_pksA=matrix(0, 1,5)
    Peaks=findpeaks(red_power[,i])
-   if (is.null(Peaks)) Peaks<- matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+   if (is.null(Peaks)) Peaks<- matrix(c(max(red_power[,i]), 
+       which.max(red_power[,i]),0,0), ncol=4, nrow=1)
    Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
    pks=Peaks[,1]
    loc=Peaks[,2]
@@ -144,6 +145,7 @@ onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%Y-%m-%d")
 ```
 
 Find the nearest to the defined with CWT onsets and offsets
+
 onset
 ```{r, eval = F}
 onoffsets$onsetcor<-as.Date(NA)
@@ -176,7 +178,8 @@ onoffsets$on_rel<-NA
 Res<-onoffsets$onsetjdcor[1]
 for(i in 2:nrow(onoffsets)){
     vec<-seq(onoffsets$onsetjdcor[i]-1*365, onoffsets$onsetjdcor[i]+1*365, by=365)
-    Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous observation
+    # centering by the previous observation
+    Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) 
 }
 onoffsets$on_rel<-Res
 ```
@@ -217,7 +220,7 @@ tmp<-wt (d=d,pad = pad, dt = dt,  dj = dj, s0 = s0,  mother=mother, lag1=0.72, d
 ```
 
 Assess CWT surface
-```{r}
+```{r, eval = F}
 plot(tmp)
 ```
 
@@ -369,22 +372,26 @@ for(i in 2:length(unique(onoffsets$Year))){
         if (base>4){ 
         base<-4
         }
-        #compare the molt scores at the CWT-defined dates of onset of pre-alternate molt with the baseline score
+        #compare the molt scores at the CWT-defined dates of onset of pre-alternate molt
+        #with the baseline score
         if (onreal %in% example_data$DATE){
            #if the molt score on the CWT-defined date of onset of pre-alternate plumage molt 
            #is larger than baseline, re-set the onset date to the first earlier date, 
            #when molt score was equal the baseline value 
            if (example_data[example_data$DATE==onreal,]$PLUM>base){
                d<-rev(which(example_data$PLUM<=base & example_data$DATE<onreal))[1]
-               onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-example_data$DATE[d]
+               onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-
+                   example_data$DATE[d]
                #otherwise, re-set the onset date to the last date after the cwt-defined onset,
                #when the molt score was smaller than the baseline value
            } else {
               d<-which(example_data$PLUM>base & example_data$DATE>onreal)[1]-1
-              onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-example_data$DATE[d]
+              onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-
+                  example_data$DATE[d]
            }
         } 
-        #compare the molt scores at the CWT-defined dates of offset of pre-basic molt with the baseline score
+        #compare the molt scores at the CWT-defined dates of offset of pre-basic molt
+        #with the baseline score
         if ((off1real %in% example_data$DATE)){
             #if the molt score on the CWT-defined date of offset of pre-basic plumage molt
             #is larger than baseline, re-set the offset date to     
@@ -392,15 +399,19 @@ for(i in 2:length(unique(onoffsets$Year))){
             #when molt score was equal to or smaller than the baseline value 
             if (example_data[example_data$DATE==off1real,]$PLUM>base){
                 b<-which(example_data$PLUM<=base & example_data$DATE>off1real)[1]
-                onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-example_data$DATE[b]
+                onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-
+                   example_data$DATE[b]
                 #otherwise, re-set the offset date before the CWT-defined offset,
-                #to the next date after the last date, when the molt score was larger than the baseline value
+                #to the next date after the last date, 
+                #when the molt score was larger than the baseline value
             } else {
                 b<-rev(which(example_data$PLUM>base & example_data$DATE<=off1real))[1]+1
-                onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-example_data$DATE[b]
+                onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-
+                   example_data$DATE[b]
             }
         }
-        #if the CWT-defined onset and/or offset date do not exist, or the period between them is 0,
+        #if the CWT-defined onset and/or offset date do not exist,
+        #or the period between them is 0,
         #then set onset and offset dates as the cwt-defined onset and offset.
     } else {
         onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_1<-onreal
@@ -498,16 +509,21 @@ for(i in 1:length(unique(onoffsets$Year))){
         }
         nr<-nr[!is.na(nr$X1),]
         base<-max(nr[nr$X1==max(nr$X1),]$X2) 
-        #compare molt scores at the CWT-defined onsets and offsets to the full plumage score
-        #in a corresponding year and set offsets of pre-alternate molt and 
+        #compare molt scores at the CWT-defined onsets and offsets 
+        # to the full plumage score in a corresponding year 
+        #and set offsets of pre-alternate molt and 
         #onset of pre-basic molt at the boundaries of the period of full plumage.
         b<-which(example_data$PLUM>=base & example_data$DATE>on)[1]
-        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-example_data$DATE[b]
+        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-
+           example_data$DATE[b]
         d<-rev(which(example_data$PLUM>=base & example_data$DATE<off))[1]
-        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-example_data$DATE[d]
+        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-
+           example_data$DATE[d]
    } else {
-        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-as.Date(NA)
-        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-as.Date(NA)
+        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$offsetcor_1<-
+           as.Date(NA)
+        onoffsets[onoffsets$Year==unique(onoffsets$Year)[i],]$onsetcor_2<-
+           as.Date(NA)
    }
 }
 ```
@@ -741,5 +757,6 @@ onoffsets_cor$startjd_cor<-Res
 
 Calculate offset dates (as the day of year), based on corresponding onset dates
 ```{r, eval = F}
-onoffsets_cor$endjd_cor<-as.numeric(onoffsets_cor$startjd_cor+(onoffsets_cor$endcor-onoffsets_cor$startcor))
+onoffsets_cor$endjd_cor<-as.numeric(onoffsets_cor$startjd_cor+
+   (onoffsets_cor$endcor-onoffsets_cor$startcor))
 ```
