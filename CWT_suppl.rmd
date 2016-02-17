@@ -12,7 +12,7 @@ Because our time series are circular (with an average period of 1 year), a chall
 
 Particularities of defining the characteristic points are given for each type of the measurements, in the corresponding paragraphs.
 
-##Packages used and the example dataset (one individual red knot)
+###Packages used and the example dataset (one individual red knot)
 ```{r, eval = F}
 library(biwavelet)
 library(pracma)
