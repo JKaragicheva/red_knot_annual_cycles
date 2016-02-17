@@ -1,5 +1,8 @@
+#Defining onsets and offsets of life-cycle stages in red knots using wavelet transformation, an example
+ 
+Supplementary 1 to
+Julia Karagicheva, Eldar Rakhimberdiev, Anne Dekinga, Maarten Brugge, Anita Koolhaas, Job ten Horn & Theunis Piersma 2016 Seasonal time-keeping in a long-distance migrating shorebird. - Journal of Biological Rhythms 000: 000-000.
 
-#Continuous wavelet transformation used to define onsets and offsets of life-cycle stages in red knots
 Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage-molt)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
 
 ##General remarks
