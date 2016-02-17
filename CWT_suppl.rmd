@@ -709,7 +709,8 @@ for(i in 1:nrow(onoffsets)){
     limit<-min(set)
     samp<-Data$y[which(Data$x > onoffsets$onsetcor[i] & Data$x<limit)]
     maximums<-max(samp)
-    maximumsdat<-Data$x[which(Data$x > onoffsets$onsetcor[i] & Data$x<limit & Data$y==maximums)]
+    maximumsdat<-Data$x[which(Data$x > onoffsets$onsetcor[i] &
+                        Data$x<limit & Data$y==maximums)]
     m<-min(maximumsdat)
     onoffsets$endmoult[i]<-m
 }
