@@ -18,7 +18,8 @@ Particularities of defining the characteristic points are given for each type of
 library(biwavelet)
 library(pracma)
 # download data from GitHub
-download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv", "Example_bird_for_wavelet_cor.csv")
+download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv",
+   "Example_bird_for_wavelet_cor.csv")
 example_data<-read.csv("Example_bird_for_wavelet_cor.csv",stringsAsFactors=F)
 example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
 example_data<-example_data[order(example_data$DATE),]
@@ -133,6 +134,8 @@ abline(v=timeOffset,col="blue")
 ###Correction of CWT-results
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 ```{r, eval = F}
+download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/body_mass_dates.csv",
+   "body_mass_dates.csv")
 onoffsets<-read.csv("body_mass_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
 onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%Y-%m-%d")
@@ -140,7 +143,6 @@ onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%Y-%m-%d")
 
 Find the nearest to the defined with CWT onsets and offsets
 onset
-
 ```{r, eval = F}
 onoffsets$onsetcor<-as.Date(NA)
 for(i in 1:nrow(onoffsets)){
@@ -305,6 +307,8 @@ abline(v=Offsetdate$offset,col="blue")
 
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 ```{r, eval = F}
+download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/plumage_molt_dates.csv",
+   "plumage_molt_dates.csv")
 onoffsets<-read.csv("plumage_molt_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%m/%d/%Y")
 onoffsets$offsetdate<-as.Date(onoffsets$offsetdate,format="%m/%d/%Y")
@@ -381,7 +385,8 @@ for(i in 2:length(unique(onoffsets$Year))){
         if ((off1real %in% example_data$DATE)){
             #if the molt score on the CWT-defined date of offset of pre-basic plumage molt
             #is larger than baseline, re-set the offset date to     
-            #the first date after the cwt-defined one, when molt score was equal to or smaller than the baseline value 
+            #the first date after the cwt-defined one,
+            #when molt score was equal to or smaller than the baseline value 
             if (example_data[example_data$DATE==off1real,]$PLUM>base){
                 b<-which(example_data$PLUM<=base & example_data$DATE>off1real)[1]
                 onoffsets[onoffsets$Year==unique(onoffsets$Year)[i-1],]$offsetcor_2<-example_data$DATE[b]
@@ -404,7 +409,8 @@ for(i in 2:length(unique(onoffsets$Year))){
 plot the results
 
 ```{r, eval = F}
-plot(example_data[order(example_data$DATE),]$PLUM~example_data[order(example_data$DATE),]$DATE,type="l")
+plot(example_data[order(example_data$DATE),]$PLUM~
+    example_data[order(example_data$DATE),]$DATE,type="l")
 abline(v=onoffsets$onsetcor_1)
 abline(v=onoffsets$offsetcor_2,col="plum")
 ```
@@ -510,7 +516,7 @@ onoffsets$onsetcor_1_jd<-as.POSIXlt(onoffsets$onsetcor_1,format="%d-%m-%Y")$yday
 onoffsets$onset1_rel<-NA
 Res<-onoffsets$onsetcor_1_jd[1]
 for(i in 2:nrow(onoffsets)){
-    vec<-seq(onoffsets$onsetcor_1_jd[i]-1*365, onoffsets$onsetcor_1_jd[i]+1*365, by=365)#Julian Date???
+    vec<-seq(onoffsets$onsetcor_1_jd[i]-1*365, onoffsets$onsetcor_1_jd[i]+1*365, by=365)
     Res<-c(Res, vec[which.min(abs(rev(Res)[1]-vec))]) # centering by the previous
 }
 onoffsets$onset1_rel<-Res
@@ -583,7 +589,8 @@ Peaks_all<-c()
 for (i in 1:length(Time)) {
     I_pksA=matrix(0, 1,5); 
     Peaks=findpeaks(red_power[,i]);
-    if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]), which.max(red_power[,i]),0,0), ncol=4, nrow=1)
+    if (is.null(Peaks)) Peaks<-	matrix(c(max(red_power[,i]),
+        which.max(red_power[,i]),0,0), ncol=4, nrow=1)
     Peaks_all<-rbind(Peaks_all, cbind(Peaks, i))
     pks=Peaks[,1]
     loc=Peaks[,2]
@@ -634,6 +641,8 @@ abline(v=Onsetdate$onset,col="red")
 The obtained with CWT results were visually assessed for irrelevantly defined  characteristic points, and the latter were removed manually. Load the manually processed data
 
 ```{r, eval = F}
+download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/wing_molt_dates.csv",
+   "wing_molt_dates.csv")
 onoffsets<-read.csv("wing_molt_dates.csv",stringsAsFactors=F)
 onoffsets$onsetdate<-as.Date(onoffsets$onsetdate,format="%Y-%m-%d")
 ```
