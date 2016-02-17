@@ -214,7 +214,7 @@ onoffsets$off_rel<-as.numeric(onoffsets$on_rel+(onoffsets$offsetcor-onoffsets$on
 
 
 
-##Part 2 Plumage molt
+##Part 2 - Plumage molt
 
 ###Prepare the data for CWT
 
@@ -599,7 +599,7 @@ onoffsets$offset2_rel<-NA
 onoffsets$offset2_rel<-onoffsets$onset2_rel+(onoffsets$offsetcor_2-onoffsets$onsetcor_2)
 ```
 
-##Part 3 Wing molt
+##Part 3 - Wing molt
 
 Wing molt had a baseline score of 0, and, therefore, its onset could be defined as the last day of the baseline score. However, there were occasional non-zero measurements, not related to the molt process, as well as zero scores obtained in the course of molt (especially in constant photoperiod). Hence, we first defined onsets using CWT, then found all the points of change from zero to positive values in the interpolated for CWT data and, for each CWT-defined onset picked the closest point of change from zero to positive score. These corrected onset dates further were used for finding dates of completion of wing molt (offsets). The latter we defined as the dates of the first maximal score between each onset and next 0 observed in at least 4 months (to avoid local zeros).
  
