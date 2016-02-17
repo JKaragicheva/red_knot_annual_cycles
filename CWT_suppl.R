@@ -16,6 +16,9 @@ Particularities of defining the characteristic points are given for each type of
 ```{r, eval = F}
 library(biwavelet)
 library(pracma)
+# download data from GitHub
+download.file("https://raw.githubusercontent.com/eldarrak/red_knot_annual_cycles/master/Example_bird_for_wavelet_cor.csv", "Example_bird_for_wavelet_cor.csv")
+
 example_data<-read.csv("Example_bird_for_wavelet_cor.csv",stringsAsFactors=F)
 example_data$DATE<-as.Date(example_data$DATE,format="%Y-%m-%d")
 example_data<-example_data[order(example_data$DATE),]
