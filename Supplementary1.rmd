@@ -4,7 +4,7 @@
 
 Supplementary 1 to Julia Karagicheva, Eldar Rakhimberdiev, Anne Dekinga, Maarten Brugge, Anita Koolhaas, Job ten Horn & Theunis Piersma 2016 Seasonal time-keeping in a long-distance migrating shorebird. - Journal of Biological Rhythms 000: 000-000.
 
-Here we provide an example of how we defined the onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2-plumage)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)). The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
+Here we provide an example of how we defined the onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)). The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
 
 ##General remarks
 Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back in the raw data the dates of measurements closest to the obtained onsets and offsets. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
