@@ -1,20 +1,21 @@
-#Defining onsets and offsets of life-cycle stages in red knots using wavelet transformation, an example
- 
-Supplementary 1 to
-Julia Karagicheva, Eldar Rakhimberdiev, Anne Dekinga, Maarten Brugge, Anita Koolhaas, Job ten Horn & Theunis Piersma 2016 Seasonal time-keeping in a long-distance migrating shorebird. - Journal of Biological Rhythms 000: 000-000.
+##Supplementary Online Material 1
 
-Here we provide an example of defining onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage-molt)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)) in our study. The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
+#Defining onsets and offsets of life-cycle stages in red knots using wavelet transformation, an example
+
+Supplementary 1 to Julia Karagicheva, Eldar Rakhimberdiev, Anne Dekinga, Maarten Brugge, Anita Koolhaas, Job ten Horn & Theunis Piersma 2016 Seasonal time-keeping in a long-distance migrating shorebird. - Journal of Biological Rhythms 000: 000-000.
+
+Here we provide an example of how we defined the onset and offset dates for body mass increase ([Part 1 - Body mass](#part-1---body-mass)), pre-alternate and pre-b asicmolt ([Part 2 - Plumage molt](#part-2---plumage-molt)) and wing molt ([Part 3 - Wing molt](#part-3---wing-molt)). The routine slightly differs for the three types of measurements, but it contains several common steps: (a) data preparation, (b) continuous wavelet transformation (CWT) and (c) correction of the obtained with CWT results.
 
 ##General remarks
-Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back the closest to the obtained onsets and offsets dates of measurements in the raw data. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
+Data preparation included interpolation of the raw data (measurements taken once per week) for every day, since CWT works better with continuous time series. Subsequently, correction of the CWT results included finding back in the raw data the dates of measurements closest to the obtained onsets and offsets. This was necessary to eliminate possible effect of the interpolation on the error distribution of the data. The body mass values and molt scores were centered around mean and scaled
 
-Parameters of CWT and frequency bands were chosen arbitrarily for each type of measurements, after several runs with varying parameters, based on visual assessment of plotted CWT results. For “mother” wavelet, we tried morlet, mexican hat (DOG) and paul wavelets and chose the latter for all the time series as the one providing the most relevant results with the measurements obtained in both, ambient (regular cycles) and constant (drifting cycles) photoperiods.
+Parameters of CWT and frequency bands were chosen arbitrarily for each type of measurement, after several runs with varying parameters, based on visual assessment of plotted CWT results. For the “mother” wavelet, we tried Morlet, Mexican hat (DOG) and Paul wavelets and we chose the latter for all the time series as the one providing the most relevant results with the measurements obtained in both, ambient (regular cycles) and constant (drifting cycles) photoperiods.
 
-To define characteristic points (onsets and offsets), we assessed amplitude of wavelet-transformed time series of a corresponding frequency band. Time locations, at which amplitude reversed from negative to positive were assigned onsets, and sign-change points from positive to negative were defined as offsets.
+To define characteristic points (onsets and offsets), we assessed amplitude of wavelet-transformed time series of a corresponding frequency band. Time locations at which amplitude reversed from negative to positive, were assigned onsets, and sign-change points from positive to negative were defined as offsets.
 
-Because our time series are circular (with an average period of 1 year), a challenging part was to adequately evaluate the periodicity in constant photoperiod, when the cycles started drifting, and two onsets or offsets were oftentimes observed in the same year or, other way around, with an interval close to two years. To cope with this complication, we centered the date (in days of year) of each characteristic point by the date of previous characteristic point of the same type (i. e., onset or offset) in the time series from the same individual.
+Because our time series are circular (with an average period of 1 year), a challenging part was to adequately evaluate the periodicity in constant photoperiod, when the cycles started drifting, and two onsets or offsets were oftentimes observed in the same year or, the other way around, with an interval close to two years. To cope with this complication, we centered the date (in days of year) of each characteristic point by the date of previous characteristic point of the same type (i. e., onset or offset) in the time series from the same individual.
 
-Particularities of defining the characteristic points are given for each type of the measurements, in the corresponding paragraphs.
+The particularities of defining the characteristic points are given for each type of measurement, in the corresponding paragraphs.
 
 ###Packages used and the example dataset (one individual red knot)
 ```{r, eval = F}
@@ -192,7 +193,7 @@ Calculate offsets of body mass decrease, based on the corresponding centered ons
 onoffsets$off_rel<-as.numeric(onoffsets$on_rel+(onoffsets$offsetcor-onoffsets$onsetcor))
 ```
 
-##Part 2 - Plumage molt
+##Part 2 - Plumage
 
 ###Prepare the data for CWT
 ```{r, eval = F}
@@ -277,7 +278,7 @@ time_minp=0
 dtmin=1
 ```
 
-Find onsets of pre-alternate plumage molt (times, at which amplitude reverses from negative to positive) 
+Find onsets of pre-alternate molt (times, at which amplitude reverses from negative to positive) 
 
 ```{r, eval = F}
 timeOnset<-c()
@@ -288,7 +289,7 @@ for ( i in 2:(length(insamp)-1)) {
 }
 ```
 
-Find offsets of pre-basic plumage molt (times, at which amplitude reverses from positive to negative)
+Find offsets of pre-basic molt (times, at which amplitude reverses from positive to negative)
 ```{r, eval = F}
 timeOffset<-c()
 for ( i in 2:(length(insamp)-1)) {
@@ -346,7 +347,7 @@ for(i in 1:nrow(onoffsets)){
 }
 ```
 
-Although the CWT-defined onsets and offsets roughly represented the boundaries of the period between pre-alternate and pre-basic plumage molts, most of the times, they did not match, either the beginning or the end of these stages, precisely enough. Therefore, we used the CWT-defined characteristic points to find the actual dates of start and end of molts. 
+Although the CWT-defined onsets and offsets roughly represented the boundaries of the period between pre-alternate and pre-basic molts, most of the times they did not match precisely enough either the beginning or the end of these stages. Therefore, we used the CWT-defined characteristic points to find the actual dates of start and end of molts. 
 ```{r, eval = F}
 #make fields for the corrected onsets of pre-alternate molt and offsets of pre-basic molt
 onoffsets$onsetcor_1<-as.Date(NA)
@@ -432,7 +433,7 @@ abline(v=onoffsets$onsetcor_1)
 abline(v=onoffsets$offsetcor_2,col="plum")
 ```
 
-The above code does not allow to find onset date of pre-alternate plumage molt for the first year and offset date of pre-basic plumage molt for the last year of observations. Let us do it.
+The above code does not allow the finding of the onset date of pre-alternate molt for the first year and the offset date of pre-basic molt for the last year of observations. Let us do it.
 
 ```{r, eval = F}
 #First year onset of pre-alternate molt
